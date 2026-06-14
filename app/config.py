@@ -20,6 +20,13 @@ class Settings:
     voice_webhook_secret: str = os.getenv(
         "VOICE_WEBHOOK_SECRET", "development-voice-secret-change-me"
     )
+    presence_node_id: str = os.getenv(
+        "PRESENCE_NODE_ID", "kannan-illam-presence-01"
+    )
+    presence_stale_seconds: int = int(os.getenv("PRESENCE_STALE_SECONDS", "30"))
+    presence_ingest_secret: str = os.getenv(
+        "PRESENCE_INGEST_SECRET", "development-presence-secret-change-me"
+    )
 
     @property
     def mqtt_enabled(self) -> bool:

@@ -27,3 +27,9 @@ services:
         sync: false
       - key: PUBLIC_BASE_URL
         value: https://kannan-illam-cloud.onrender.com
+      - key: PRESENCE_NODE_ID
+        value: kannan-illam-presence-01
+      - key: PRESENCE_STALE_SECONDS
+        value: "30"
+      - key: PRESENCE_INGEST_SECRET
+        sync: false

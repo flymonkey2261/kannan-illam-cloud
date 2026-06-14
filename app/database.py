@@ -48,6 +48,25 @@ class Database:
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS presence_state (
+                    node_id TEXT PRIMARY KEY,
+                    payload TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS presence_settings (
+                    id INTEGER PRIMARY KEY CHECK (id = 1),
+                    safety_mode INTEGER NOT NULL DEFAULT 0,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS presence_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    node_id TEXT NOT NULL,
+                    zone TEXT NOT NULL,
+                    detected INTEGER NOT NULL,
+                    person_count INTEGER NOT NULL,
+                    payload TEXT NOT NULL,
+                    occurred_at TEXT NOT NULL
+                );
                 """
             )
             columns = {
@@ -68,6 +87,13 @@ class Database:
                         utc_now(),
                     ),
                 )
+            self.connection.execute(
+                """
+                INSERT OR IGNORE INTO presence_settings(id,safety_mode,updated_at)
+                VALUES(1,0,?)
+                """,
+                (utc_now(),),
+            )
             self.connection.commit()
 
     def user_by_email(self, email: str) -> sqlite3.Row | None:
@@ -138,6 +164,81 @@ class Database:
                 "SELECT * FROM commands WHERE id = ?", (command_id,)
             ).fetchone()
         return dict(row) if row is not None else None
+
+    def save_presence(self, node_id: str, payload: dict[str, Any]) -> None:
+        with self.lock:
+            self.connection.execute(
+                """
+                INSERT INTO presence_state(node_id,payload,updated_at) VALUES(?,?,?)
+                ON CONFLICT(node_id) DO UPDATE SET
+                    payload=excluded.payload,updated_at=excluded.updated_at
+                """,
+                (node_id, json.dumps(payload), utc_now()),
+            )
+            self.connection.commit()
+
+    def get_presence(self, node_id: str) -> dict[str, Any] | None:
+        with self.lock:
+            row = self.connection.execute(
+                "SELECT payload,updated_at FROM presence_state WHERE node_id=?",
+                (node_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        payload = json.loads(row["payload"])
+        payload["cloudUpdatedAt"] = row["updated_at"]
+        return payload
+
+    def safety_mode(self) -> bool:
+        with self.lock:
+            row = self.connection.execute(
+                "SELECT safety_mode FROM presence_settings WHERE id=1"
+            ).fetchone()
+        return bool(row["safety_mode"]) if row else False
+
+    def set_safety_mode(self, enabled: bool) -> None:
+        with self.lock:
+            self.connection.execute(
+                "UPDATE presence_settings SET safety_mode=?,updated_at=? WHERE id=1",
+                (int(enabled), utc_now()),
+            )
+            self.connection.commit()
+
+    def add_presence_event(self, payload: dict[str, Any]) -> None:
+        with self.lock:
+            self.connection.execute(
+                """
+                INSERT INTO presence_events(
+                    node_id,zone,detected,person_count,payload,occurred_at
+                ) VALUES(?,?,?,?,?,?)
+                """,
+                (
+                    payload["nodeId"],
+                    payload["zone"],
+                    int(payload["detected"]),
+                    payload["personCount"],
+                    json.dumps(payload),
+                    payload["lastSeen"],
+                ),
+            )
+            self.connection.commit()
+
+    def presence_events(self, limit: int = 100) -> list[dict[str, Any]]:
+        with self.lock:
+            rows = self.connection.execute(
+                """
+                SELECT id,payload,occurred_at FROM presence_events
+                ORDER BY id DESC LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+        result = []
+        for row in rows:
+            payload = json.loads(row["payload"])
+            payload["eventId"] = row["id"]
+            payload["occurredAt"] = row["occurred_at"]
+            result.append(payload)
+        return result
 
 
 db = Database(settings.database_path)

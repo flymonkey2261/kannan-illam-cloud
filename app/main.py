@@ -11,8 +11,17 @@ from fastapi.responses import FileResponse
 
 from .config import settings
 from .database import db
-from .models import DisplayRequest, LoginRequest, StartRequest, StopRequest, VoiceDirective
+from .models import (
+    DisplayRequest,
+    LoginRequest,
+    PresenceTelemetry,
+    SafetyModeRequest,
+    StartRequest,
+    StopRequest,
+    VoiceDirective,
+)
 from .mqtt_bridge import mqtt_bridge
+from .presence import current_presence_state, ingest_presence
 from .realtime import hub
 from .security import create_access_token, decode_access_token, verify_password
 
@@ -45,7 +54,7 @@ async def lifespan(app: FastAPI):
     mqtt_bridge.stop()
 
 
-app = FastAPI(title="KANNAN ILLAM Cloud", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="KANNAN ILLAM Cloud", version="3.0.0", lifespan=lifespan)
 
 
 def current_user(authorization: str | None = Header(default=None)) -> str:
@@ -62,6 +71,16 @@ def trusted_voice_service(
 ) -> None:
     if not x_voice_secret or x_voice_secret != settings.voice_webhook_secret:
         raise HTTPException(401, "Invalid voice integration secret")
+
+
+def trusted_presence_node(
+    x_presence_secret: str | None = Header(default=None),
+) -> None:
+    if (
+        not x_presence_secret
+        or x_presence_secret != settings.presence_ingest_secret
+    ):
+        raise HTTPException(401, "Invalid presence ingest secret")
 
 
 def create_command(
@@ -119,6 +138,50 @@ def device_state(user: str = Depends(current_user)) -> dict[str, Any]:
         "mqttConnected": mqtt_bridge.connected,
         "state": current_device_state(),
     }
+
+
+@app.post("/api/presence/telemetry", status_code=202)
+def presence_telemetry(
+    request: PresenceTelemetry,
+    _: None = Depends(trusted_presence_node),
+) -> dict[str, Any]:
+    if request.nodeId != settings.presence_node_id:
+        raise HTTPException(403, "Presence node is not registered")
+    payload = request.model_dump(mode="json")
+    payload["lastSeen"] = (
+        request.lastSeen or datetime.now(timezone.utc)
+    ).isoformat()
+    return ingest_presence(payload)
+
+
+@app.get("/api/presence/state")
+def presence_state(user: str = Depends(current_user)) -> dict[str, Any]:
+    return {
+        "presence": current_presence_state(),
+        "safetyMode": db.safety_mode(),
+    }
+
+
+@app.put("/api/presence/safety-mode")
+async def set_safety_mode(
+    request: SafetyModeRequest, user: str = Depends(current_user)
+) -> dict[str, Any]:
+    db.set_safety_mode(request.enabled)
+    event = {
+        "type": "presence",
+        "presence": current_presence_state(),
+        "safetyMode": request.enabled,
+        "alert": False,
+    }
+    await hub.broadcast(event)
+    return event
+
+
+@app.get("/api/presence/events")
+def presence_events(
+    limit: int = 100, user: str = Depends(current_user)
+) -> dict[str, Any]:
+    return {"events": db.presence_events(max(1, min(limit, 500)))}
 
 
 @app.post("/api/commands/start", status_code=202)
@@ -209,6 +272,14 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     await hub.connect(websocket)
     await websocket.send_json(
         {"type": "state", "state": db.get_state(settings.device_id)}
+    )
+    await websocket.send_json(
+        {
+            "type": "presence",
+            "presence": current_presence_state(),
+            "safetyMode": db.safety_mode(),
+            "alert": False,
+        }
     )
     try:
         while True:

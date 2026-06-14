@@ -7,7 +7,9 @@ import paho.mqtt.client as mqtt
 
 from .config import settings
 from .database import db
+from .models import PresenceTelemetry
 from .realtime import hub
+from .presence import ingest_presence
 
 
 class MqttBridge:
@@ -75,6 +77,9 @@ class MqttBridge:
             client.subscribe(
                 self.topic(settings.device_id, "status/#"), qos=1
             )
+            client.subscribe(
+                f"{settings.mqtt_topic_root}/presence/+/telemetry", qos=1
+            )
 
     def _on_disconnect(self, client, userdata, disconnect_flags, reason_code, properties) -> None:
         self.connected = False
@@ -83,6 +88,27 @@ class MqttBridge:
         try:
             payload = json.loads(message.payload.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError):
+            return
+
+        presence_prefix = f"{settings.mqtt_topic_root}/presence/"
+        if (
+            message.topic.startswith(presence_prefix)
+            and message.topic.endswith("/telemetry")
+        ):
+            node_id = message.topic[len(presence_prefix) : -len("/telemetry")]
+            if payload.get("nodeId") != node_id:
+                return
+            try:
+                telemetry = PresenceTelemetry.model_validate(payload)
+            except ValueError:
+                return
+            if telemetry.nodeId != settings.presence_node_id:
+                return
+            normalized = telemetry.model_dump(mode="json")
+            if telemetry.lastSeen is None:
+                return
+            normalized["lastSeen"] = telemetry.lastSeen.isoformat()
+            ingest_presence(normalized)
             return
 
         suffix = message.topic.split(f"{settings.device_id}/", 1)[-1]

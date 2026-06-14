@@ -1,15 +1,15 @@
 {
   "platform": "android",
-  "versionName": "2.1.2",
-  "versionCode": 212,
-  "fileName": "kannan-illam-2.1.2.apk",
+  "versionName": "3.0.0",
+  "versionCode": 300,
+  "fileName": "kannan-illam-3.0.0.apk",
   "releaseNotes": [
-    "Prevents WebSocket reconnect loops from causing false offline states",
-    "Uses resilient cloud polling with local fallback and longer cold-start timeouts",
-    "Rejects commands immediately when the ESP32 heartbeat is offline or stale",
-    "Compacts all three motor cards and keeps timer and STOP controls together",
-    "Moves Tank CCTV display controls to the Camera tab"
+    "Adds an always-available live RuView 3D Presence Map",
+    "Adds Safety Mode alerts without coupling presence to motor control",
+    "Shows zone, distance, confidence, person count, movement, and stale state",
+    "Adds View 3D Map and Open CCTV notification actions",
+    "Keeps the motor timer-only safety controller unchanged"
   ],
   "mandatory": false,
-  "sha256": "aa5f83cb939662c97f4918fa60a381f24bfd739e3ef61a6885b0c7864350f0be"
+  "sha256": "02060802a0a49828a414fc00fe9b0be93619f8aaca3df040b7f3ad8683e4b40f"
 }
