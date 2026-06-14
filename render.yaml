@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: kannan-illam-cloud-gautam
+    name: kannan-illam-cloud
     runtime: docker
     plan: free
     healthCheckPath: /health
@@ -26,4 +26,4 @@ services:
       - key: VOICE_WEBHOOK_SECRET
         sync: false
       - key: PUBLIC_BASE_URL
-        value: https://kannan-illam-cloud-gautam.onrender.com
+        value: https://kannan-illam-cloud.onrender.com

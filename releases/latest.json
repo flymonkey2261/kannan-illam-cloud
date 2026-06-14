@@ -1,13 +1,13 @@
 {
   "platform": "android",
-  "versionName": "2.0.1",
-  "versionCode": 201,
-  "fileName": "kannan-illam-2.0.1.apk",
+  "versionName": "2.1.0",
+  "versionCode": 210,
+  "fileName": "kannan-illam-2.1.0.apk",
   "releaseNotes": [
-    "Fixed the app remaining on the animated splash screen",
-    "Dashboard and setup wizard now open before network discovery completes",
-    "Added resilient startup timeouts and stable local hostname discovery"
+    "Enabled production remote access through the KANNAN ILLAM cloud backend",
+    "Migrates old placeholder cloud settings to the deployed HTTPS service",
+    "Keeps local control available when the ESP32 is on the same network"
   ],
   "mandatory": false,
-  "sha256": "997107d7d20c4ae3c158c89ba56515beec4e1afe68e8f9d086bb043c1cd0bebf"
+  "sha256": "c9ed6d9af8f2c95dccbdee10ab7dcb100627cfe5ea984b5d7748a40baf5acc2b"
 }
