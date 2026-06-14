@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: kannan-illam-cloud-gautam
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: APP_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        value: gautam.powerbolt@gmail.com
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DEVICE_ID
+        value: kannan-illam-esp32-01
+      - key: MQTT_HOST
+        sync: false
+      - key: MQTT_PORT
+        value: "8883"
+      - key: MQTT_USERNAME
+        sync: false
+      - key: MQTT_PASSWORD
+        sync: false
+      - key: MQTT_TOPIC_ROOT
+        value: kannan-illam
+      - key: VOICE_WEBHOOK_SECRET
+        sync: false
+      - key: PUBLIC_BASE_URL
+        value: https://kannan-illam-cloud-gautam.onrender.com

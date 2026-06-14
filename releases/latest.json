@@ -1,0 +1,13 @@
+{
+  "platform": "android",
+  "versionName": "2.0.1",
+  "versionCode": 201,
+  "fileName": "kannan-illam-2.0.1.apk",
+  "releaseNotes": [
+    "Fixed the app remaining on the animated splash screen",
+    "Dashboard and setup wizard now open before network discovery completes",
+    "Added resilient startup timeouts and stable local hostname discovery"
+  ],
+  "mandatory": false,
+  "sha256": "997107d7d20c4ae3c158c89ba56515beec4e1afe68e8f9d086bb043c1cd0bebf"
+}
