@@ -14,6 +14,7 @@ class Settings:
     mqtt_password: str = os.getenv("MQTT_PASSWORD", "")
     mqtt_topic_root: str = os.getenv("MQTT_TOPIC_ROOT", "kannan-illam")
     command_timeout_seconds: int = int(os.getenv("COMMAND_TIMEOUT_SECONDS", "10"))
+    device_stale_seconds: int = int(os.getenv("DEVICE_STALE_SECONDS", "30"))
     database_path: str = os.getenv("DATABASE_PATH", "data/kannan_illam.db")
     public_base_url: str = os.getenv("PUBLIC_BASE_URL", "http://localhost:8080")
     voice_webhook_secret: str = os.getenv(

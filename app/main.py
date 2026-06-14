@@ -2,6 +2,7 @@ import asyncio
 import json
 import uuid
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from typing import Any
 
 import jwt
@@ -17,6 +18,22 @@ from .security import create_access_token, decode_access_token, verify_password
 
 
 MOTOR_NAMES = {"SILENT", "RAJA", "RANI"}
+
+
+def current_device_state() -> dict[str, Any] | None:
+    state = db.get_state(settings.device_id)
+    if state is None:
+        return None
+    try:
+        updated_at = datetime.fromisoformat(state["cloudUpdatedAt"])
+        age_seconds = (datetime.now(timezone.utc) - updated_at).total_seconds()
+    except (KeyError, TypeError, ValueError):
+        age_seconds = settings.device_stale_seconds + 1
+    if age_seconds > settings.device_stale_seconds:
+        state["online"] = False
+        state["cloudConnected"] = False
+        state["reason"] = "heartbeat_stale"
+    return state
 
 
 @asynccontextmanager
@@ -54,6 +71,12 @@ def create_command(
     duration_seconds: int | None = None,
     mode: str | None = None,
 ) -> dict[str, Any]:
+    if settings.mqtt_enabled:
+        if not mqtt_bridge.connected:
+            raise HTTPException(503, "Cloud MQTT broker is unavailable")
+        device_state = current_device_state()
+        if device_state is None or device_state.get("online") is not True:
+            raise HTTPException(503, "ESP32 is offline or its heartbeat is stale")
     command = {
         "commandId": str(uuid.uuid4()),
         "deviceId": settings.device_id,
@@ -94,7 +117,7 @@ def device_state(user: str = Depends(current_user)) -> dict[str, Any]:
     return {
         "deviceId": settings.device_id,
         "mqttConnected": mqtt_bridge.connected,
-        "state": db.get_state(settings.device_id),
+        "state": current_device_state(),
     }
 
 

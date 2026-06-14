@@ -90,6 +90,12 @@ class MqttBridge:
             current = db.get_state(settings.device_id) or {}
             if suffix == "status/display":
                 current["display"] = payload
+                current["online"] = True
+                current["cloudConnected"] = True
+            elif suffix == "status/motors":
+                current.update(payload)
+                current["online"] = True
+                current["cloudConnected"] = True
             else:
                 current.update(payload)
             db.save_state(settings.device_id, current)
