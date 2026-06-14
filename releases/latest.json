@@ -1,15 +1,15 @@
 {
   "platform": "android",
-  "versionName": "2.1.1",
-  "versionCode": 211,
-  "fileName": "kannan-illam-2.1.1.apk",
+  "versionName": "2.1.2",
+  "versionCode": 212,
+  "fileName": "kannan-illam-2.1.2.apk",
   "releaseNotes": [
-    "Redesigned the motor dashboard for a cleaner, faster mobile experience",
-    "Fixed countdown rings to start at 12 o'clock and reduce smoothly clockwise",
-    "Shows Sending, Waiting for ESP32, Acknowledged, and Running command states",
-    "Reports the exact backend or ESP32 rejection reason instead of a generic ACK error",
-    "Hardened notification initialization and permission handling to prevent crashes"
+    "Prevents WebSocket reconnect loops from causing false offline states",
+    "Uses resilient cloud polling with local fallback and longer cold-start timeouts",
+    "Rejects commands immediately when the ESP32 heartbeat is offline or stale",
+    "Compacts all three motor cards and keeps timer and STOP controls together",
+    "Moves Tank CCTV display controls to the Camera tab"
   ],
   "mandatory": false,
-  "sha256": "e9f20cf746c08d46200e60c2c2c6018833efa9ab9fd51342bc419a7abee54d2a"
+  "sha256": "aa5f83cb939662c97f4918fa60a381f24bfd739e3ef61a6885b0c7864350f0be"
 }
