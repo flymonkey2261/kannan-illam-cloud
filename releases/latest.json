@@ -1,13 +1,15 @@
 {
   "platform": "android",
-  "versionName": "2.1.0",
-  "versionCode": 210,
-  "fileName": "kannan-illam-2.1.0.apk",
+  "versionName": "2.1.1",
+  "versionCode": 211,
+  "fileName": "kannan-illam-2.1.1.apk",
   "releaseNotes": [
-    "Enabled production remote access through the KANNAN ILLAM cloud backend",
-    "Migrates old placeholder cloud settings to the deployed HTTPS service",
-    "Keeps local control available when the ESP32 is on the same network"
+    "Redesigned the motor dashboard for a cleaner, faster mobile experience",
+    "Fixed countdown rings to start at 12 o'clock and reduce smoothly clockwise",
+    "Shows Sending, Waiting for ESP32, Acknowledged, and Running command states",
+    "Reports the exact backend or ESP32 rejection reason instead of a generic ACK error",
+    "Hardened notification initialization and permission handling to prevent crashes"
   ],
   "mandatory": false,
-  "sha256": "c9ed6d9af8f2c95dccbdee10ab7dcb100627cfe5ea984b5d7748a40baf5acc2b"
+  "sha256": "e9f20cf746c08d46200e60c2c2c6018833efa9ab9fd51342bc419a7abee54d2a"
 }
