@@ -1,5 +1,6 @@
 import os
 import tempfile
+from datetime import datetime, timedelta, timezone
 
 os.environ["DATABASE_PATH"] = tempfile.mktemp(suffix=".db")
 os.environ["ADMIN_PASSWORD"] = "test-password"
@@ -7,7 +8,8 @@ os.environ["VOICE_WEBHOOK_SECRET"] = "test-voice-secret"
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app.database import db
+from app.main import app, current_device_state
 
 
 def auth_headers(client: TestClient) -> dict[str, str]:
@@ -50,3 +52,23 @@ def test_display_permanent_on_is_separate_from_motor_start() -> None:
         assert response.status_code == 202
         assert response.json()["action"] == "display"
         assert response.json()["mode"] == "on"
+
+
+def test_stale_heartbeat_is_reported_offline() -> None:
+    db.save_state(
+        "kannan-illam-esp32-01",
+        {"online": True, "cloudConnected": True, "motors": []},
+    )
+    stale_at = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+    with db.lock:
+        db.connection.execute(
+            "UPDATE device_state SET updated_at=? WHERE device_id=?",
+            (stale_at, "kannan-illam-esp32-01"),
+        )
+        db.connection.commit()
+
+    state = current_device_state()
+    assert state is not None
+    assert state["online"] is False
+    assert state["cloudConnected"] is False
+    assert state["reason"] == "heartbeat_stale"
