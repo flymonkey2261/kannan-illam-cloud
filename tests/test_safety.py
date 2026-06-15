@@ -140,3 +140,29 @@ def test_safety_mode_logs_only_detection_transition() -> None:
         assert second.json()["alert"] is False
         events = client.get("/api/presence/events", headers=headers).json()["events"]
         assert len(events) == 1
+
+
+def test_accepts_limited_single_esp_experiment_telemetry() -> None:
+    with TestClient(app) as client:
+        headers = auth_headers(client)
+        response = client.post(
+            "/api/presence/telemetry",
+            headers={"X-Presence-Secret": "test-presence-secret"},
+            json={
+                "nodeId": "kannan-illam-presence-01",
+                "zone": "Motor Controller",
+                "detected": False,
+                "personCount": 0,
+                "confidence": 0.18,
+                "motionScore": 0.4,
+                "rssi": -58,
+                "movementState": "clear",
+                "source": "single-esp-experiment",
+            },
+        )
+        assert response.status_code == 202
+        state = client.get("/api/presence/state", headers=headers).json()["presence"]
+        assert state["source"] == "single-esp-experiment"
+        assert state["motionScore"] == 0.4
+        assert state["rssi"] == -58
+        assert state["x"] is None

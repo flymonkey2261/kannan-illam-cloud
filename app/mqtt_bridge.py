@@ -1,6 +1,7 @@
 import json
 import ssl
 import threading
+from datetime import datetime, timezone
 from typing import Any
 
 import paho.mqtt.client as mqtt
@@ -105,9 +106,9 @@ class MqttBridge:
             if telemetry.nodeId != settings.presence_node_id:
                 return
             normalized = telemetry.model_dump(mode="json")
-            if telemetry.lastSeen is None:
-                return
-            normalized["lastSeen"] = telemetry.lastSeen.isoformat()
+            normalized["lastSeen"] = (
+                telemetry.lastSeen or datetime.now(timezone.utc)
+            ).isoformat()
             ingest_presence(normalized)
             return
 

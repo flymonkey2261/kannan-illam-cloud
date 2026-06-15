@@ -54,7 +54,8 @@ def ingest_presence(payload: dict[str, Any]) -> dict[str, Any]:
     )
     db.save_presence(payload["nodeId"], payload)
     safety_mode = db.safety_mode()
-    alert = safety_mode and rising_detection
+    alert_eligible = payload.get("source") != "single-esp-experiment"
+    alert = safety_mode and rising_detection and alert_eligible
     if alert:
         db.add_presence_event(payload)
     event = {

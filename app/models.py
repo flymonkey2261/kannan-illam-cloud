@@ -42,11 +42,16 @@ class PresenceTelemetry(BaseModel):
     y: float | None = None
     z: float | None = None
     confidence: float = Field(default=0, ge=0, le=1)
+    motionScore: float | None = Field(default=None, ge=0, le=1)
+    rssi: int | None = Field(default=None, ge=-127, le=0)
     movementState: str = Field(default="unknown", max_length=48)
     lastSeen: datetime | None = None
-    source: Literal["ruview-edge-vitals", "ruview-sensing-server", "simulator"] = (
-        "ruview-edge-vitals"
-    )
+    source: Literal[
+        "ruview-edge-vitals",
+        "ruview-sensing-server",
+        "simulator",
+        "single-esp-experiment",
+    ] = "ruview-edge-vitals"
 
 
 class SafetyModeRequest(BaseModel):
